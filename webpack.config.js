@@ -7,7 +7,7 @@ module.exports = {
     mode: 'development',
     entry: {
 
-        entry: './src/v-dom.js',
+        entry: './src/Muon/index.js',
         // Runtime code for hot module replacement
 
 
