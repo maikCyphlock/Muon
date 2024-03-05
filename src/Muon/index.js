@@ -1,8 +1,6 @@
-/** @jsx Muon.createElement */
 
-const Muon = {
-    createElement,
-}
+
+
 function createElement(type, props, ...children) {
     return {
         type,
@@ -101,20 +99,44 @@ function commitWork(fiber) {
     if (!fiber) {
         return
     }
-    const domParent = fiber.parent.dom
-    if (fiber.effectTag === "PLACEMENT" && fiber.dom != null) {
 
-        domParent.appendChild(fiber.dom)
-    } else if (fiber.effectTag === "UPDATE" && fiber.dom != null) {
-        updateDom(fiber.dom, fiber.alternate.props, fiber.props)
-    } else if (fiber.effectTag === "DELETION") {
-        domParent.removeChild(fiber.dom)
+    let domParentFiber = fiber.parent
+    while (!domParentFiber.dom) {
+        domParentFiber = domParentFiber.parent
     }
+    const domParent = domParentFiber.dom
+
+    if (
+        fiber.effectTag === "PLACEMENT" &&
+        fiber.dom != null
+    ) {
+        domParent.appendChild(fiber.dom)
+    } else if (
+        fiber.effectTag === "UPDATE" &&
+        fiber.dom != null
+    ) {
+        updateDom(
+            fiber.dom,
+            fiber.alternate.props,
+            fiber.props
+        )
+    } else if (fiber.effectTag === "DELETION") {
+        commitDeletion(fiber, domParent)
+    }
+
     commitWork(fiber.child)
     commitWork(fiber.sibling)
 }
+
+function commitDeletion(fiber, domParent) {
+    if (fiber.dom) {
+        domParent.removeChild(fiber.dom)
+    } else {
+        commitDeletion(fiber.child, domParent)
+    }
+}
 function render(element, container) {
-    //TODO: implement render
+
     progressRoot = {
         dom: container,
         props: {
@@ -146,32 +168,13 @@ function workLoop(deadline) {
 requestIdleCallback(workLoop)
 
 function performUnitOfWork(fiber) {
-    if (!fiber.dom) {
-        fiber.dom = createDom(fiber)
+    const isFunctionComponent =
+        fiber.type instanceof Function
+    if (isFunctionComponent) {
+        updateFunctionComponent(fiber)
+    } else {
+        updateHostComponent(fiber)
     }
-
-
-    const elements = fiber.props.children;
-    reconcileChildren(fiber, elements)
-    let index = 0;
-    let prevSibling = null;
-    while (index < elements.length) {
-        const element = elements[index];
-        const newFiber = {
-            type: element.type,
-            props: element.props,
-            parent: fiber,
-            dom: null,
-        }
-        if (index === 0) {
-            fiber.child = newFiber
-        } else {
-            prevSibling.sibling = newFiber
-        }
-        prevSibling = newFiber
-        index++
-    }
-
     if (fiber.child) {
         return fiber.child
     }
@@ -182,6 +185,17 @@ function performUnitOfWork(fiber) {
         }
         nextFiber = nextFiber.parent
     }
+}
+function updateFunctionComponent(fiber) {
+    const children = [fiber.type(fiber.props)]
+    reconcileChildren(fiber, children)
+}
+
+function updateHostComponent(fiber) {
+    if (!fiber.dom) {
+        fiber.dom = createDom(fiber)
+    }
+    reconcileChildren(fiber, fiber.props.children)
 }
 function reconcileChildren(progressFiber, elements) {
     let index = 0;
@@ -219,22 +233,32 @@ function reconcileChildren(progressFiber, elements) {
             oldFiber.effectTag = "DELETION"
             deletions.push(oldFiber)
         }
+        if (oldFiber) {
+            oldFiber = oldFiber.sibling
+        }
+
+        if (index === 0) {
+            progressFiber.child = newFiber
+        } else if (element) {
+            prevSibling.sibling = newFiber
+        }
+
+        prevSibling = newFiber
+        index++
     }
+}
+
+const Muon = {
+    createElement,
+    render,
 }
 
 
 
-const fiber = (
-    <div id="foo">
-        <a>bar</a>
-        <b />
-        <h1>hellow</h1>
-        <div>
-            <h2>hola </h2>
-        </div>
-        <a>baz</a>
-    </div>
-)
-
-render(fiber, document.getElementById('root'))
-console.log(fiber)
+/** @jsx Muon.createElement */
+function App(props) {
+    return <h1>Hi {props.name}</h1>
+}
+const element = <App name="foo" />
+const container = document.getElementById("root")
+Muon.render(element, container)
