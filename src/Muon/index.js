@@ -28,8 +28,6 @@ function createTextElement(text) {
  *  @param {HTMLElement} container 
  */
 function render(element, container) {
-
-
     const dom = element.type === "TEXT_ELEMENT" ? document.createTextNode(element.props.nodeValue) : document.createElement(element.type);
 
     const isProperty = key => key !== "children"
@@ -44,9 +42,15 @@ function render(element, container) {
         render(child, dom)
     )
     container.appendChild(dom);
-
-
 }
+
+let nextUnitOfWork = null
+
+function workLoop(deadline) {
+    let shouldYield = false
+    requestIdleCallback(workLoop)
+}
+requestIdleCallback(workLoop)
 
 const element = (
     <div id="foo">
