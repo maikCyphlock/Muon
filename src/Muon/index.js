@@ -1,6 +1,14 @@
 
 
 
+/**
+ * Create a new element with the given type, props, and children.
+ *
+ * @param {type} type - The type of the element.
+ * @param {type} props - The properties of the element.
+ * @param {...type} children - The children elements of the element.
+ * @return {object} The newly created element.
+ */
 function createElement(type, props, ...children) {
     return {
         type,
@@ -11,6 +19,12 @@ function createElement(type, props, ...children) {
     }
 }
 
+/**
+ * Creates a text element with the given text.
+ *
+ * @param {string} text - the text for the text element
+ * @return {object} the created text element
+ */
 function createTextElement(text) {
     return {
         type: 'TEXT_ELEMENT',
@@ -21,9 +35,12 @@ function createTextElement(text) {
     }
 }
 
+
 /**
- *  @param {object} element
- *  @param {HTMLElement} container 
+ * Creates a DOM element based on the given fiber object.
+ *
+ * @param {Object} fiber - The fiber object used to create the DOM element.
+ * @return {Element} The created DOM element.
  */
 function createDom(fiber) {
     const dom = fiber.type === "TEXT_ELEMENT" ? document.createTextNode(fiber.props.nodeValue) : document.createElement(fiber.type);
@@ -38,6 +55,13 @@ const isProperty = key =>
 const isNew = (prev, next) => key =>
     prev[key] !== next[key]
 const isGone = (prev, next) => key => !(key in next)
+/**
+ * Updates the DOM based on the changes in the previous and next properties.
+ *
+ * @param {Object} dom - the DOM element to be updated
+ * @param {Object} prevProps - the previous properties of the DOM element
+ * @param {Object} nextProps - the next properties of the DOM element
+ */
 function updateDom(dom, prevProps, nextProps) {
     //Remove old or changed event listeners
     Object.keys(prevProps)
@@ -82,6 +106,10 @@ function updateDom(dom, prevProps, nextProps) {
             )
         })
 }
+/**
+ * Commits the root by processing deletions, committing work, and updating root and progressRoot.
+ *
+ */
 function commitRoot() {
     deletions.forEach(commitWork)
     commitWork(progressRoot.child)
@@ -89,6 +117,12 @@ function commitRoot() {
     progressRoot = null
 }
 
+/**
+ * Commits the changes made during the reconciliation to the actual DOM.
+ *
+ * @param {object} fiber - The fiber node representing the current work
+ * @return {void} 
+ */
 function commitWork(fiber) {
     if (!fiber) {
         return
@@ -122,6 +156,13 @@ function commitWork(fiber) {
     commitWork(fiber.sibling)
 }
 
+/**
+ * Commit deletion of a fiber node from the DOM parent.
+ *
+ * @param {object} fiber - the fiber node to be deleted
+ * @param {object} domParent - the DOM parent from which the fiber node will be deleted
+ * @return {void} 
+ */
 function commitDeletion(fiber, domParent) {
     if (fiber.dom) {
         domParent.removeChild(fiber.dom)
@@ -129,6 +170,12 @@ function commitDeletion(fiber, domParent) {
         commitDeletion(fiber.child, domParent)
     }
 }
+/**
+ * Render the given element into the specified container.
+ *
+ * @param {element} element - the element to render
+ * @param {container} container - the container to render the element into
+ */
 function render(element, container) {
 
     progressRoot = {
@@ -146,6 +193,12 @@ let nextUnitOfWork = null
 let progressRoot = null
 let currentRoot = null
 let deletions = null
+/**
+ * A function that runs a work loop until a specific deadline is reached.
+ *
+ * @param {Object} deadline - The deadline object to check if the loop should yield
+ * @return {void} 
+ */
 function workLoop(deadline) {
     let shouldYield = false
     while (nextUnitOfWork && !shouldYield) {
@@ -161,6 +214,12 @@ function workLoop(deadline) {
 }
 requestIdleCallback(workLoop)
 
+/**
+ * Perform a unit of work in the fiber tree.
+ *
+ * @param {Object} fiber - The fiber to perform work on
+ * @return {Object} The next fiber to perform work on
+ */
 function performUnitOfWork(fiber) {
     const isFunctionComponent =
         fiber.type instanceof Function
@@ -183,6 +242,12 @@ function performUnitOfWork(fiber) {
 
 let wipFiber = null
 let hookIndex = null
+/**
+ * Update a function component in the fiber.
+ *
+ * @param {Object} fiber - The fiber to be updated
+ * @return {void} 
+ */
 function updateFunctionComponent(fiber) {
     wipFiber = fiber
     hookIndex = 0
@@ -190,6 +255,11 @@ function updateFunctionComponent(fiber) {
     const children = [fiber.type(fiber.props)]
     reconcileChildren(fiber, children)
 }
+/**
+ * Custom implementation of useState hook
+ * @param {any} initial - Initial state value
+ * @returns {[any, function]} - Array containing state value and setter function
+ */
 function useState(initial) {
     const oldHook =
         wipFiber.alternate &&
