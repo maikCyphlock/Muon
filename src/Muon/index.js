@@ -1,6 +1,4 @@
 
-
-
 /**
  * Create a new element with the given type, props, and children.
  *
@@ -290,12 +288,24 @@ function useState(initial) {
     return [hook.state, setState]
 }
 
+/**
+ * Update the host component based on the given fiber.
+ *
+ * @param {Object} fiber - The fiber to be updated
+ * @return {void} 
+ */
 function updateHostComponent(fiber) {
     if (!fiber.dom) {
         fiber.dom = createDom(fiber)
     }
     reconcileChildren(fiber, fiber.props.children)
 }
+/**
+ * Reconciles children elements in the fiber tree.
+ *
+ * @param {Object} progressFiber - The current fiber being processed.
+ * @param {Array} elements - The elements to reconcile with the progressFiber.
+ */
 function reconcileChildren(progressFiber, elements) {
     let index = 0;
     let oldFiber = progressFiber.alternate && progressFiber.alternate.child;
